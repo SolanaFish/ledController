@@ -4,9 +4,9 @@
 #define blueLedPin 6
 
 // BUTTON PINS
-#define buttonPin1 16
 #define buttonPin2 14
 #define buttonPin3 15
+#define buttonPin1 16
 
 // ENCODER PINS
 #define encoder1Pin1 2
@@ -64,6 +64,9 @@ void setup() {
 }
 
 void loop() {
+///////////////////////////////////////////////////////////////
+//ENCODER CONTROLL
+///////////////////////////////////////////////////////////////
   encoder1New = digitalRead(encoder1Pin1);
   if(encoder1Last == LOW && encoder1New == HIGH) {
     if(digitalRead(encoder1Pin2) == LOW) {
@@ -72,7 +75,7 @@ void loop() {
       // rotated forward
     }
     encoder1Last = encoder1New;
-    continue; //TODO: that works ? 
+    continue; //TODO: that works ?
   }
   encoder2New = digitalRead(encoder2Pin1);
   if(encoder2Last == LOW && encoder2New == HIGH) {
@@ -92,6 +95,30 @@ void loop() {
     }
     encoder3Last = encoder3New;
   }
+///////////////////////////////////////////////////////////////
+//BUTTON CONTROLL
+///////////////////////////////////////////////////////////////
+  if(digitalRead(buttonPin1) == HIGH) { // TODO: try without if
+    while (digitalRead(buttonPin1) == HIGH) {
+      delay(1); // TODO: try without delay
+    }
+    // button action
+  }
+  if(digitalRead(buttonPin2) == HIGH) { // TODO: try without if
+    while (digitalRead(buttonPin2) == HIGH) {
+      delay(1); // TODO: try without delay
+    }
+    // button action
+  }
+  if(digitalRead(buttonPin1) == HIGH) { // TODO: try without if
+    while (digitalRead(buttonPin2) == HIGH) {
+      delay(1); // TODO: try without delay
+    }
+    // button action
+  }
+///////////////////////////////////////////////////////////////
+//LED CONTROLL
+///////////////////////////////////////////////////////////////
   switch(ledMode) { // LED controlls
     case 1: { // 1 - breathing
       ledBrightnes += brightnesStep;

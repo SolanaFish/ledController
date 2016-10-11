@@ -69,136 +69,153 @@ void setup() {
   pinMode(encoder2Pin2, INPUT);
   pinMode(encoder3Pin1, INPUT);
   pinMode(encoder3Pin2, INPUT);
-
 }
 
 void loop() {
 ///////////////////////////////////////////////////////////////
 //ENCODER CONTROL
 ///////////////////////////////////////////////////////////////
-// LED COLOR CONTROL
   encoder1New = digitalRead(encoder1Pin1);
-  if(encoder1Last == LOW && encoder1New == HIGH) {
-    if(digitalRead(encoder1Pin2) == LOW) {
-     switch (encoder1Color) {
-         case RED: {
-             redLed -= ledColorStepManual;
-         } break;
-         case GREEN: {
-             greenLed -= ledColorStepManual;
-         } break;
-         case BLUE: {
-             blueLed -= ledColorStepManual;
-         } break;
-     }
-    } else {
-        switch (encoder1Color) {
-            case RED: {
-                redLed += ledColorStepManual;
-            } break;
-            case GREEN: {
-                greenLed += ledColorStepManual;
-            } break;
-            case BLUE: {
-                blueLed += ledColorStepManual;
-            } break;
-        }
-    }
-    encoder1Last = encoder1New;
-
-    analogWrite(redLedPin, redLed*ledBrightnes);
-    analogWrite(greenLedPin, greenLed*ledBrightnes);
-    analogWrite(blueLedPin, blueLed*ledBrightnes);
-
-    return;
-  }
-  // LED brightness control
   encoder2New = digitalRead(encoder2Pin1);
-  if(encoder2Last == LOW && encoder2New == HIGH) {
-    if(digitalRead(encoder2Pin2) == LOW) {
-        if(ledBrightnes > brightnesStepManual){
-            ledBrightnes -= brightnesStepManual;
-        }
-    } else {
-        if (ledBrightnes < 1 - brightnesStepManual) {
-            ledBrightnes += brightnesStepManual;
-        }
-    }
-    encoder2Last = encoder2New;
-
-    analogWrite(redLedPin, redLed*ledBrightnes);
-    analogWrite(greenLedPin, greenLed*ledBrightnes);
-    analogWrite(blueLedPin, blueLed*ledBrightnes);
-
-    return;
-  }
-  // Volume control
   encoder3New = digitalRead(encoder3Pin1);
-  if(encoder3Last == LOW && encoder3New == HIGH) {
-    if(digitalRead(encoder3Pin2) == LOW) {
-      // rotated back
-    } else {
-      // rotated forward
-    }
-    encoder3Last = encoder3New;
-    return;
-  }
-///////////////////////////////////////////////////////////////
-//BUTTON CONTROL
-///////////////////////////////////////////////////////////////
-  if(digitalRead(buttonPin1) == HIGH) {
-    while (digitalRead(buttonPin1) == HIGH) {
-      delay(1); // TODO: try without delay
-    }
-    // button action
-    return;
-  }
+  // LED COLOR CONTROL
+  if(encoder1New == LOW) {
+      while(digitalRead(encoder1Pin1) == LOW){
+      }
 
-  if(digitalRead(buttonPin2) == HIGH) {
-    while (digitalRead(buttonPin2) == HIGH) {
-      delay(1); // TODO: try without delay
-    }
-    if(ledMode == MODERAINBOW) {
-        ledMode = MODECOLOR;
-    } else {
-        ledMode++;
-    }
-    return;
-  }
-
-  if(digitalRead(buttonPin1) == HIGH) {
-    while (digitalRead(buttonPin2) == HIGH) {
-      delay(1); // TODO: try without delay
-    }
-    if(encoder1Color == BLUE) {
-        encoder1Color = RED;
-    } else {
-        encoder1Color++;
-    }
-    return;
-  }
-///////////////////////////////////////////////////////////////
-//LED CONTROL
-///////////////////////////////////////////////////////////////
-  switch(ledMode) { // LED controls
-    case MODEBREATHING: { // 1 - breathing
-      ledBrightnes += brightnesStep;
-      if(brightnesStep > 0) {
-        if (ledBrightnes >= 1) {
-          brightnesStep = -1*brightnesStep;
-        }
+      if(digitalRead(encoder1Pin2) == LOW) {
+       switch (encoder1Color) {
+           case RED: {
+               if(redLed > ledColorStepManual) {
+                   redLed -= ledColorStepManual;
+               }
+           } break;
+           case GREEN: {
+               if(greenLed > ledColorStepManual) {
+                   greenLed -= ledColorStepManual;
+               }
+           } break;
+           case BLUE: {
+               if(blueLed > ledColorStepManual) {
+                   blueLed -= ledColorStepManual;
+               }
+           } break;
+       }
       } else {
-        if (ledBrightnes <= 0) {
-          brightnesStep = -1*brightnesStep;
-        }
+          switch (encoder1Color) {
+              case RED: {
+                  if(redLed < 255 - ledColorStepManual) {
+                      redLed += ledColorStepManual;
+                  }
+              } break;
+              case GREEN: {
+                  if(greenLed < 255 - ledColorStepManual) {
+                      greenLed += ledColorStepManual;
+                  }
+              } break;
+              case BLUE: {
+                  if(blueLed < 255 - ledColorStepManual) {
+                      blueLed += ledColorStepManual;
+                  }
+              } break;
+          }
       }
       analogWrite(redLedPin, redLed*ledBrightnes);
       analogWrite(greenLedPin, greenLed*ledBrightnes);
       analogWrite(blueLedPin, blueLed*ledBrightnes);
-    } break;
-    case MODERAINBOW: { // 2 - rainbow
-
-    }
+      return;
   }
-//  delay(30);
+
+  // LED brightness
+  if(encoder2New == LOW) {
+      while(digitalRead(encoder2Pin1) == LOW){
+      }
+      if(digitalRead(encoder2Pin2) == LOW) {
+          if(ledBrightnes > brightnesStepManual){
+              ledBrightnes -= brightnesStepManual;
+          }
+      } else {
+          if (ledBrightnes < 1 - brightnesStepManual) {
+              ledBrightnes += brightnesStepManual;
+          }
+      }
+
+      analogWrite(redLedPin, redLed*ledBrightnes);
+      analogWrite(greenLedPin, greenLed*ledBrightnes);
+      analogWrite(blueLedPin, blueLed*ledBrightnes);
+      return;
+  }
+
+  // Volume control
+  if(encoder3New == LOW) {
+      while(digitalRead(encoder3Pin1) == LOW){
+      }
+      if(digitalRead(encoder3Pin2) == LOW) {
+        // rotated back
+      } else {
+        // rotated forward
+      }
+      return;
+  }
+
+///////////////////////////////////////////////////////////////
+//BUTTON CONTROL
+///////////////////////////////////////////////////////////////
+  // if(digitalRead(buttonPin1) == HIGH) {
+  //   while (digitalRead(buttonPin1) == HIGH) {
+  //     delay(1); // TODO: try without delay
+  //   }
+  //   // button action
+  //   return;
+  // }
+  //
+  // if(digitalRead(buttonPin2) == HIGH) {
+  //   while (digitalRead(buttonPin2) == HIGH) {
+  //     delay(1); // TODO: try without delay
+  //   }
+  //   if(ledMode == MODERAINBOW) {
+  //       ledMode = MODECOLOR;
+  //   } else {
+  //       ledMode++;
+  //   }
+  //   return;
+  // }
+  //
+  // if(digitalRead(buttonPin1) == HIGH) {
+  //   while (digitalRead(buttonPin2) == HIGH) {
+  //     delay(1); // TODO: try without delay
+  //   }
+  //   if(encoder1Color == BLUE) {
+  //       encoder1Color = RED;
+  //   } else {
+  //       encoder1Color++;
+  //   }
+  //   return;
+  // }
+///////////////////////////////////////////////////////////////
+//LED CONTROL
+///////////////////////////////////////////////////////////////
+    if(ledMode != MODECOLOR) {
+        switch(ledMode) { // LED controls
+            case MODEBREATHING: { // 1 - breathing
+                ledBrightnes += brightnesStep;
+                if(brightnesStep > 0) {
+                    if (ledBrightnes >= 1) {
+                        brightnesStep = -1*brightnesStep;
+                    }
+                } else {
+                    if (ledBrightnes <= 0) {
+                        brightnesStep = -1*brightnesStep;
+                    }
+                }
+                analogWrite(redLedPin, redLed*ledBrightnes);
+                analogWrite(greenLedPin, greenLed*ledBrightnes);
+                analogWrite(blueLedPin, blueLed*ledBrightnes);
+            } break;
+            case MODERAINBOW: { // 2 - rainbow
+
+            }
+        }
+    }
+ // delay(30);
 }

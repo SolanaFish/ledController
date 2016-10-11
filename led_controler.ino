@@ -3,6 +3,11 @@
 #define greenLedPin 5
 #define blueLedPin 6
 
+// LED COLORS
+#define RED 0
+#define GREEN 1
+#define BLUE 2
+
 // BUTTON PINS
 #define buttonPin2 14
 #define buttonPin3 15
@@ -23,24 +28,28 @@ unsigned short blueLed = 255;
 
 // Encoder variables
   // Encoder 1
-  short encoder1Last = low;
-  short encoder1New = low;
+  short encoder1Last = LOW;
+  short encoder1New = LOW;
   // Encoder 2
-  short encoder2Last = low;
-  short encoder2New = low;
+  short encoder2Last = LOW;
+  short encoder2New = LOW;
   // Encoder 3
-  short encoder3Last = low;
-  short encoder3New = low;
+  short encoder3Last = LOW;
+  short encoder3New = LOW;
 
 // LED current mode
-// 0 - color
-// 1 - breathing
-// 2 - rainbow
-unsigned short ledMode = 0;
+#define MODECOLOR 0
+#define MODEBREATHING 1
+#define MODERAINBOW 2
+
+unsigned short ledMode = MODECOLOR;
 
 // LED brightnes
 float ledBrightnes = 1;
 float brightnesStep = -0.05;
+float brightnesStepManual = 0.05;
+unsigned short ledColorStepManual = 10;
+unsigned short encoder1Color = RED;
 
 void setup() {
   // pin setup for LED strip
@@ -67,26 +76,63 @@ void loop() {
 ///////////////////////////////////////////////////////////////
 //ENCODER CONTROL
 ///////////////////////////////////////////////////////////////
+// LED COLOR CONTROL
   encoder1New = digitalRead(encoder1Pin1);
   if(encoder1Last == LOW && encoder1New == HIGH) {
     if(digitalRead(encoder1Pin2) == LOW) {
-      // rotated back
+     switch (encoder1Color) {
+         case RED: {
+             redLed -= ledColorStepManual;
+         } break;
+         case GREEN: {
+             greenLed -= ledColorStepManual;
+         } break;
+         case BLUE: {
+             blueLed -= ledColorStepManual;
+         } break;
+     }
     } else {
-      // rotated forward
+        switch (encoder1Color) {
+            case RED: {
+                redLed += ledColorStepManual;
+            } break;
+            case GREEN: {
+                greenLed += ledColorStepManual;
+            } break;
+            case BLUE: {
+                blueLed += ledColorStepManual;
+            } break;
+        }
     }
     encoder1Last = encoder1New;
+
+    analogWrite(redLedPin, redLed*ledBrightnes);
+    analogWrite(greenLedPin, greenLed*ledBrightnes);
+    analogWrite(blueLedPin, blueLed*ledBrightnes);
+
     return;
   }
+  // LED brightness control
   encoder2New = digitalRead(encoder2Pin1);
   if(encoder2Last == LOW && encoder2New == HIGH) {
     if(digitalRead(encoder2Pin2) == LOW) {
-      // rotated back
+        if(ledBrightnes > brightnesStepManual){
+            ledBrightnes -= brightnesStepManual;
+        }
     } else {
-      // rotated forward
+        if (ledBrightnes < 1 - brightnesStepManual) {
+            ledBrightnes += brightnesStepManual;
+        }
     }
     encoder2Last = encoder2New;
+
+    analogWrite(redLedPin, redLed*ledBrightnes);
+    analogWrite(greenLedPin, greenLed*ledBrightnes);
+    analogWrite(blueLedPin, blueLed*ledBrightnes);
+
     return;
   }
+  // Volume control
   encoder3New = digitalRead(encoder3Pin1);
   if(encoder3Last == LOW && encoder3New == HIGH) {
     if(digitalRead(encoder3Pin2) == LOW) {
@@ -100,29 +146,42 @@ void loop() {
 ///////////////////////////////////////////////////////////////
 //BUTTON CONTROL
 ///////////////////////////////////////////////////////////////
-  if(digitalRead(buttonPin1) == HIGH) { // TODO: try without if
+  if(digitalRead(buttonPin1) == HIGH) {
     while (digitalRead(buttonPin1) == HIGH) {
       delay(1); // TODO: try without delay
     }
     // button action
+    return;
   }
-  if(digitalRead(buttonPin2) == HIGH) { // TODO: try without if
+
+  if(digitalRead(buttonPin2) == HIGH) {
     while (digitalRead(buttonPin2) == HIGH) {
       delay(1); // TODO: try without delay
     }
-    // button action
+    if(ledMode == MODERAINBOW) {
+        ledMode = MODECOLOR;
+    } else {
+        ledMode++;
+    }
+    return;
   }
-  if(digitalRead(buttonPin1) == HIGH) { // TODO: try without if
+
+  if(digitalRead(buttonPin1) == HIGH) {
     while (digitalRead(buttonPin2) == HIGH) {
       delay(1); // TODO: try without delay
     }
-    // button action
+    if(encoder1Color == BLUE) {
+        encoder1Color = RED;
+    } else {
+        encoder1Color++;
+    }
+    return;
   }
 ///////////////////////////////////////////////////////////////
 //LED CONTROL
 ///////////////////////////////////////////////////////////////
   switch(ledMode) { // LED controls
-    case 1: { // 1 - breathing
+    case MODEBREATHING: { // 1 - breathing
       ledBrightnes += brightnesStep;
       if(brightnesStep > 0) {
         if (ledBrightnes >= 1) {
@@ -137,7 +196,7 @@ void loop() {
       analogWrite(greenLedPin, greenLed*ledBrightnes);
       analogWrite(blueLedPin, blueLed*ledBrightnes);
     } break;
-    case 2: { // 2 - rainbow
+    case MODERAINBOW: { // 2 - rainbow
 
     }
   }

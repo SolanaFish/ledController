@@ -65,7 +65,7 @@ void setup() {
 
 void loop() {
 ///////////////////////////////////////////////////////////////
-//ENCODER CONTROLL
+//ENCODER CONTROL
 ///////////////////////////////////////////////////////////////
   encoder1New = digitalRead(encoder1Pin1);
   if(encoder1Last == LOW && encoder1New == HIGH) {
@@ -75,7 +75,7 @@ void loop() {
       // rotated forward
     }
     encoder1Last = encoder1New;
-    continue; //TODO: that works ?
+    return;
   }
   encoder2New = digitalRead(encoder2Pin1);
   if(encoder2Last == LOW && encoder2New == HIGH) {
@@ -85,6 +85,7 @@ void loop() {
       // rotated forward
     }
     encoder2Last = encoder2New;
+    return;
   }
   encoder3New = digitalRead(encoder3Pin1);
   if(encoder3Last == LOW && encoder3New == HIGH) {
@@ -94,9 +95,10 @@ void loop() {
       // rotated forward
     }
     encoder3Last = encoder3New;
+    return;
   }
 ///////////////////////////////////////////////////////////////
-//BUTTON CONTROLL
+//BUTTON CONTROL
 ///////////////////////////////////////////////////////////////
   if(digitalRead(buttonPin1) == HIGH) { // TODO: try without if
     while (digitalRead(buttonPin1) == HIGH) {
@@ -117,9 +119,9 @@ void loop() {
     // button action
   }
 ///////////////////////////////////////////////////////////////
-//LED CONTROLL
+//LED CONTROL
 ///////////////////////////////////////////////////////////////
-  switch(ledMode) { // LED controlls
+  switch(ledMode) { // LED controls
     case 1: { // 1 - breathing
       ledBrightnes += brightnesStep;
       if(brightnesStep > 0) {

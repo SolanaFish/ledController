@@ -53,10 +53,17 @@ unsigned short ledMode = MODECOLOR;
 
 // LED brightnes
 float ledBrightnes = 1;
-float brightnesStep = -0.001;
-float brightnesStepManual = 0.05;
-unsigned short ledColorStepManual = 10;
+float brightnesStep = -0.005;
+float brightnesStepManual = 0.01;
+unsigned short ledColorStepManual = 5;
 unsigned short encoder1Color = RED;
+
+// Rainbowmode
+unsigned long lastUpdate = millis();
+unsigned int changeEvery = 5*1000; // In milis
+unsigned short lastR = 0;
+unsigned short lastG = 0;
+unsigned short lastB = 0;
 
 void setup() {
   // pin setup for LED strip
@@ -92,6 +99,9 @@ void setup() {
   analogWrite(redLedPin, redLed*ledBrightnes);
   analogWrite(greenLedPin, greenLed*ledBrightnes);
   analogWrite(blueLedPin, blueLed*ledBrightnes);
+
+  // rainbow mode setup
+  randomSeed(analogRead(A3));
 
   Serial.begin(9600);
 }
@@ -155,20 +165,30 @@ void loop() {
   if(encoder2New == LOW) {
       while(digitalRead(encoder2Pin1) == LOW){
       }
-      if(digitalRead(encoder2Pin2) == LOW) {
-          if(ledBrightnes > brightnesStepManual){
-              ledBrightnes -= brightnesStepManual;
+      if(ledMode == MODECOLOR) {
+          if(digitalRead(encoder2Pin2) == LOW) {
+              if(ledBrightnes > brightnesStepManual){
+                  ledBrightnes -= brightnesStepManual;
+              }
+          } else {
+              if (ledBrightnes < 1 - brightnesStepManual) {
+                  ledBrightnes += brightnesStepManual;
+              }
           }
-      } else {
-          if (ledBrightnes < 1 - brightnesStepManual) {
-              ledBrightnes += brightnesStepManual;
+          analogWrite(redLedPin, redLed*ledBrightnes);
+          analogWrite(greenLedPin, greenLed*ledBrightnes);
+          analogWrite(blueLedPin, blueLed*ledBrightnes);
+          return;
+      }
+      if(ledMode == MODEBREATHING) {
+          if(digitalRead(encoder2Pin2) == LOW) {
+              brightnesStep = brightnesStep*0.9;
+          } else {
+              brightnesStep = brightnesStep*1.1;
           }
+          return;
       }
 
-      analogWrite(redLedPin, redLed*ledBrightnes);
-      analogWrite(greenLedPin, greenLed*ledBrightnes);
-      analogWrite(blueLedPin, blueLed*ledBrightnes);
-      return;
   }
 
   // Volume control
@@ -195,28 +215,33 @@ void loop() {
     if(digitalRead(buttonPin1) == HIGH) {
         while (digitalRead(buttonPin1) == HIGH) {
         }
-        if(encoder1Color == BLUE) {
-            encoder1Color = RED;
-        } else {
-            encoder1Color++;
+        if(ledMode == MODECOLOR) {
+            if(encoder1Color == BLUE) {
+                encoder1Color = RED;
+            } else {
+                encoder1Color++;
+            }
+            // Change color of indicator led
+            switch(encoder1Color) {
+                case RED: {
+                    digitalWrite(INDICATOR_R, LOW);
+                    digitalWrite(INDICATOR_G, HIGH);
+                    digitalWrite(INDICATOR_B, HIGH);
+                }break;
+                case GREEN: {
+                    digitalWrite(INDICATOR_R, HIGH);
+                    digitalWrite(INDICATOR_G, LOW);
+                    digitalWrite(INDICATOR_B, HIGH);
+                }break;
+                case BLUE: {
+                    digitalWrite(INDICATOR_R, HIGH);
+                    digitalWrite(INDICATOR_G, HIGH);
+                    digitalWrite(INDICATOR_B, LOW);
+                }break;
+            }
         }
-        // Change color of indicator led
-        switch(encoder1Color) {
-            case RED: {
-                digitalWrite(INDICATOR_R, LOW);
-                digitalWrite(INDICATOR_G, HIGH);
-                digitalWrite(INDICATOR_B, HIGH);
-            }break;
-            case GREEN: {
-                digitalWrite(INDICATOR_R, HIGH);
-                digitalWrite(INDICATOR_G, LOW);
-                digitalWrite(INDICATOR_B, HIGH);
-            }break;
-            case BLUE: {
-                digitalWrite(INDICATOR_R, HIGH);
-                digitalWrite(INDICATOR_G, HIGH);
-                digitalWrite(INDICATOR_B, LOW);
-            }break;
+        if(ledMode == MODERAINBOW) {
+            lastUpdate -= changeEvery;
         }
         // delay for debouncing (500 is a lot, and you can't spam button)
         delay(500);
@@ -230,8 +255,27 @@ void loop() {
     }
     if(ledMode == MODERAINBOW) {
         ledMode = MODECOLOR;
+        encoder1Color = RED;
+        digitalWrite(INDICATOR_R, LOW);
+        digitalWrite(INDICATOR_G, HIGH);
+        digitalWrite(INDICATOR_B, HIGH);
+        analogWrite(redLedPin, redLed*ledBrightnes);
+        analogWrite(greenLedPin, greenLed*ledBrightnes);
+        analogWrite(blueLedPin, blueLed*ledBrightnes);
     } else {
-        ledMode++;
+        if(ledMode == MODECOLOR) {
+            ledMode = MODEBREATHING;
+            digitalWrite(INDICATOR_R, HIGH);
+            digitalWrite(INDICATOR_G, LOW);
+            digitalWrite(INDICATOR_B, LOW);
+        } else {
+            if(ledMode == MODEBREATHING) {
+                ledMode = MODERAINBOW;
+                digitalWrite(INDICATOR_R, LOW);
+                digitalWrite(INDICATOR_G, LOW);
+                digitalWrite(INDICATOR_B, LOW);
+            }
+        }
     }
   // delay for debouncing
   delay(500);
@@ -260,10 +304,12 @@ void loop() {
                 if(brightnesStep > 0) {
                     if (ledBrightnes >= 1) {
                         brightnesStep = -1*brightnesStep;
+                        ledBrightnes = 1;
                     }
                 } else {
                     if (ledBrightnes <= 0) {
                         brightnesStep = -1*brightnesStep;
+                        ledBrightnes = 0;
                     }
                 }
                 analogWrite(redLedPin, redLed*ledBrightnes);
@@ -272,8 +318,32 @@ void loop() {
                 delay(10);
             } break;
             case MODERAINBOW: { // 2 - rainbow
-
+                if(millis() - lastUpdate > changeEvery) {
+                    transmition(lastR,lastG,lastB,random(256),random(256),random(256));
+                    lastUpdate = millis();
+                }
             }
         }
     }
+}
+
+void transmition(short oldR, short oldG, short oldB, short newR, short newG, short newB) {
+    short difR = oldR - newR;
+    short difG = oldG - newG;
+    short difB = oldB - newB;
+    double stepR = difR / 20;
+    double stepG = difG / 20;
+    double stepB = difB / 20;
+    lastR = newR;
+    lastG = newG;
+    lastB = newB;
+    for(int i = 0; i < 20; ++i ) {
+        analogWrite(redLedPin, (int)(oldR - (i*stepR)));
+        analogWrite(greenLedPin, (int)(oldG - (i*stepG)));
+        analogWrite(blueLedPin, (int)(oldG - (i*stepG)));
+        delay(25);
+    }
+    analogWrite(redLedPin, newR);
+    analogWrite(greenLedPin, newG);
+    analogWrite(blueLedPin, newB);
 }

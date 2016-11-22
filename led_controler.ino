@@ -1,3 +1,6 @@
+// INCLUDES
+    #include <DS1307RTC.h>
+    #include <ArduinoJson.h>
 // LED PINS
     #define redLedPin 9
     #define greenLedPin 5
@@ -69,6 +72,15 @@
     unsigned short lastB = 0;
     unsigned int transitionSteps = 500;
 
+// Alarm
+    unsigned short alarmH;
+    unsigned short alarmM;
+    boolean alarmSet = false;
+    unsigned short alarmMode = MODECOLOR;
+    unsigned short alarmR = 255;
+    unsigned short alarmG = 255;
+    unsigned short alarmB = 255;
+
 void setup() {
     // pin setup for LED strip
         pinMode(redLedPin, OUTPUT);
@@ -113,7 +125,7 @@ void setup() {
 
 void loop() {
 ///////////////////////////////////////////////////////////////
-//ENCODER CONTROL
+//Main switc of the program
 ///////////////////////////////////////////////////////////////
     encoder1New = digitalRead(encoder1Pin1);
     encoder2New = digitalRead(encoder2Pin1);
@@ -342,6 +354,9 @@ void loop() {
             }
         } break;
     }
+///////////////////////////////////////////////////////////////
+// Controls that don't depend on mode
+///////////////////////////////////////////////////////////////
 
   // ENCODER 3
   // Volume control
@@ -360,11 +375,7 @@ void loop() {
   //     return;
   // }
 
-///////////////////////////////////////////////////////////////
-//BUTTON CONTROL
-///////////////////////////////////////////////////////////////
-
-// LED mode
+// Button 1 control - change led mode
   if(digitalRead(buttonPin2) == HIGH) {
     while (digitalRead(buttonPin2) == HIGH) {
     }
@@ -439,6 +450,202 @@ void loop() {
                     lastUpdate = millis();
                 }
             }
+        }
+    }
+
+    ///////////////////////////////////////////////////////////////
+    // Alarm control
+    ///////////////////////////////////////////////////////////////
+    if(alarmSet) {
+        if(hour() == alarmH) {
+            if(minute() >= alarmM) { // if past the time of alarm
+                alarmSet = false;
+                if(alarmMode == MODECOLOR) {
+                    ledMode = MODECOLOR;
+                    encoder1Color = RED;
+                    ledBrightnes = 1;
+                    redLed = alarmR;
+                    greenLed = alarmG;
+                    blueLed = alarmB;
+                    digitalWrite(INDICATOR_R, LOW);
+                    digitalWrite(INDICATOR_G, HIGH);
+                    digitalWrite(INDICATOR_B, HIGH);
+                    analogWrite(redLedPin, redLed*ledBrightnes);
+                    analogWrite(greenLedPin, greenLed*ledBrightnes);
+                    analogWrite(blueLedPin, blueLed*ledBrightnes);
+                } else {
+                    if(alarmMode == MODEBREATHING) {
+                        ledMode = MODEBREATHING;
+                        redLed = alarmR;
+                        greenLed = alarmG;
+                        blueLed = alarmB;
+                        digitalWrite(INDICATOR_R, HIGH);
+                        digitalWrite(INDICATOR_G, LOW);
+                        digitalWrite(INDICATOR_B, LOW);
+                    } else {
+                        if(alarmMode == MODERAINBOW) {
+                            ledMode = MODERAINBOW;
+                            digitalWrite(INDICATOR_R, LOW);
+                            digitalWrite(INDICATOR_G, LOW);
+                            digitalWrite(INDICATOR_B, LOW);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    ///////////////////////////////////////////////////////////////
+    //Serial control
+    ///////////////////////////////////////////////////////////////
+    if(Serial.available()) {
+        String command = Serial.readStringUntil(' ');
+        if(command == "mode") { // Changing mode
+            String incomingMode = Serial.readStringUntil(' ');
+            if(incomingMode == "color") {
+                ledMode = MODECOLOR;
+                encoder1Color = RED;
+                ledBrightnes = 1;
+                digitalWrite(INDICATOR_R, LOW);
+                digitalWrite(INDICATOR_G, HIGH);
+                digitalWrite(INDICATOR_B, HIGH);
+                analogWrite(redLedPin, redLed*ledBrightnes);
+                analogWrite(greenLedPin, greenLed*ledBrightnes);
+                analogWrite(blueLedPin, blueLed*ledBrightnes);
+                Serial.println("ok mode color");
+            } else if(incomingMode == "breathing") {
+                ledMode = MODEBREATHING;
+                digitalWrite(INDICATOR_R, HIGH);
+                digitalWrite(INDICATOR_G, LOW);
+                digitalWrite(INDICATOR_B, LOW);
+                Serial.println("ok mode breathing");
+            } else if(incomingMode == "random") {
+                ledMode = MODERAINBOW;
+                digitalWrite(INDICATOR_R, LOW);
+                digitalWrite(INDICATOR_G, LOW);
+                digitalWrite(INDICATOR_B, LOW);
+                Serial.println("ok mode random");
+            } else {
+                Serial.println("err mode " + incomingMode);
+            }
+        } else if(command == "color"){ // changing current color
+            String sr = Serial.readStringUntil(' ');
+            String sg = Serial.readStringUntil(' ');
+            String sb = Serial.readStringUntil(' ');
+            int r = sr.toInt();
+            int g = sg.toInt();
+            int b = sb.toInt();
+            if(r >= 0 && g >= 0 && b >= 0) {
+                redLed = r;
+                greenLed = g;
+                blueLed = b;
+                if(ledMode == MODECOLOR) {
+                    analogWrite(redLedPin, redLed*ledBrightnes);
+                    analogWrite(greenLedPin, greenLed*ledBrightnes);
+                    analogWrite(blueLedPin, blueLed*ledBrightnes);
+                }
+                Serial.println("ok set color");
+            } else {
+                Serial.println("err set color");
+            }
+        } else if(command == "brightnes"){ // setting brightnes
+            String sb = Serial.readStringUntil(' ');
+            float b = sb.toFloat();
+            if (b >= 0 && b <= 1) {
+                ledBrightnes = (double)b;
+                if(ledMode == MODECOLOR) {
+                    analogWrite(redLedPin, redLed*ledBrightnes);
+                    analogWrite(greenLedPin, greenLed*ledBrightnes);
+                    analogWrite(blueLedPin, blueLed*ledBrightnes);
+                }
+                Serial.println("ok set brightnes");
+            } else {
+                Serial.println("err set brightnes");
+            }
+        } else if(command == "alarm"){ // setting alarm
+            String state = Serial.readStringUntil(' ');
+            if(state = "on") { // read if on or off
+                String sh = Serial.readStringUntil(' '); // read hours
+                String sm = Serial.readStringUntil(' '); // read minutes
+                int h = sh.toInt();
+                int m = sm.toInt();
+                if(h >= 0 && m >= 0 && h < 24 && m < 60) { // if time ok
+                    String alarmS = Serial.readStringUntil(' '); // read mode of alarm
+                    unsigned short newAlarmMode = alarmS.toInt();
+                    if(newAlarmMode >= 0 && newAlarmMode <= 3) { // if mode ok
+                        String sr = Serial.readStringUntil(' '); // read red
+                        String sg = Serial.readStringUntil(' '); // read green
+                        String sb = Serial.readStringUntil(' '); // read blue
+                        unsigned short ir = sr.toInt();
+                        unsigned short ig = sg.toInt();
+                        unsigned short ib = sb.toInt();
+                        if(ir > 0 && ir < 256 && ig > 0 && ig < 256 && ib > 0 && ib < 256) { // if colors ok
+                            // set alarm
+                            alarmH = h;
+                            alarmM = m;
+                            alarmR = ir;
+                            alarmG = ig;
+                            alarmB = ib;
+                            alarmMode = newAlarmMode;
+                            alarmSet = true;
+                            Serial.println("ok set alarm on");
+                        } else {
+                            Serial.println("err set alarm on colors");
+                            Serial.println(ir);
+                            Serial.println(ig);
+                            Serial.println(ib);
+                        }
+                    } else {
+                        Serial.println("err set alarm on mode");
+                    }
+                } else {
+                    Serial.println("err set alarm on time");
+                }
+                if(timeStatus() == timeNotSet && alarmSet) { // If time wasn't set...
+                    Serial.println("time"); // Send reqest for current time and...
+                    while(!Serial.available()) { // Wait for response
+                    }
+                    long currentTime = Serial.parseInt();
+                    if(currentTime > 0) {
+                        setTime(currentTime);
+                        Serial.println("ok set time");
+                    } else {
+                        Serial.println("err set time");
+                    }
+                }
+            } else {
+                alarmSet = false;
+                Serial.println("ok set alarm off");
+            }
+        } else if(command == "json") {
+            StaticJsonBuffer<512> jsonBuffer;
+            JsonObject& root = jsonBuffer.createObject();
+            root["mode"] = ledMode;
+            root["brightnes"] = ledBrightnes;
+            root["brightnesStep"] = brightnesStep;
+            JsonObject& colorData = root.createNestedObject("colors");
+            colorData["red"] = redLed;
+            colorData["green"] = greenLed;
+            colorData["blue"] = blueLed;
+            JsonObject& rainbowData = root.createNestedObject("rainbow");
+            rainbowData["lastUpdate"] = lastUpdate;
+            rainbowData["changeEvery"] = changeEvery;
+            rainbowData["transitionSteps"] = transitionSteps;
+            if(alarmSet) {
+                JsonObject& alarmData = root.createNestedObject("alarm");
+                alarmData["hour"] = alarmH;
+                alarmData["minute"] = alarmM;
+                alarmData["alarmMode"] = alarmMode;
+                JsonObject& alarmColors = alarmData.createNestedObject("colors");
+                alarmData["red"] = alarmR;
+                alarmData["green"] = alarmG;
+                alarmData["blue"] = alarmB;
+            } else {
+                root["alarm"] = false;
+            }
+            root.printTo(Serial);
+        } else {
+            Serial.println("err " + command);
         }
     }
 }

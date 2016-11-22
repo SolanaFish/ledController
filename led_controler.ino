@@ -34,15 +34,15 @@ unsigned short greenLed = 255;
 unsigned short blueLed = 255;
 
 // Encoder variables
-  // Encoder 1
-  short encoder1Last = LOW;
-  short encoder1New = LOW;
-  // Encoder 2
-  short encoder2Last = LOW;
-  short encoder2New = LOW;
-  // Encoder 3
-  short encoder3Last = LOW;
-  short encoder3New = LOW;
+    // Encoder 1
+    short encoder1Last = LOW;
+    short encoder1New = LOW;
+    // Encoder 2
+    short encoder2Last = LOW;
+    short encoder2New = LOW;
+    // Encoder 3
+    short encoder3Last = LOW;
+    short encoder3New = LOW;
 
 // LED current mode
 #define MODECOLOR 0
@@ -66,105 +66,106 @@ unsigned short lastG = 0;
 unsigned short lastB = 0;
 
 void setup() {
-  // pin setup for LED strip
-  pinMode(redLedPin, OUTPUT);
-  pinMode(greenLedPin, OUTPUT);
-  pinMode(blueLedPin, OUTPUT);
+    // pin setup for LED strip
+    pinMode(redLedPin, OUTPUT);
+    pinMode(greenLedPin, OUTPUT);
+    pinMode(blueLedPin, OUTPUT);
 
-  // pin setup for BUTTONs
-  pinMode(buttonPin1, INPUT);
-  pinMode(buttonPin2, INPUT);
-  // pinMode(buttonPin3, INPUT);
+    // pin setup for BUTTONs
+    pinMode(buttonPin1, INPUT);
+    pinMode(buttonPin2, INPUT);
+    // pinMode(buttonPin3, INPUT);
 
-  // pin setup for ENCODERs
-  pinMode(encoder1Pin1, INPUT);
-  pinMode(encoder1Pin2, INPUT);
-  pinMode(encoder2Pin1, INPUT);
-  pinMode(encoder2Pin2, INPUT);
-  pinMode(encoder3Pin1, INPUT);
-  pinMode(encoder3Pin2, INPUT);
+    // pin setup for ENCODERs
+    pinMode(encoder1Pin1, INPUT);
+    pinMode(encoder1Pin2, INPUT);
+    pinMode(encoder2Pin1, INPUT);
+    pinMode(encoder2Pin2, INPUT);
+    pinMode(encoder3Pin1, INPUT);
+    pinMode(encoder3Pin2, INPUT);
 
-  // pin setup for INDICATOR led
-  pinMode(INDICATOR_POWER, OUTPUT);
-  pinMode(INDICATOR_R, OUTPUT);
-  pinMode(INDICATOR_G, OUTPUT);
-  pinMode(INDICATOR_B, OUTPUT);
-  digitalWrite(INDICATOR_POWER, HIGH);
-  // Set red as a default color for INDICATOR led
-  digitalWrite(INDICATOR_R, LOW);
-  digitalWrite(INDICATOR_G, HIGH);
-  digitalWrite(INDICATOR_B, HIGH);
+    // pin setup for INDICATOR led
+    pinMode(INDICATOR_POWER, OUTPUT);
+    pinMode(INDICATOR_R, OUTPUT);
+    pinMode(INDICATOR_G, OUTPUT);
+    pinMode(INDICATOR_B, OUTPUT);
+    digitalWrite(INDICATOR_POWER, HIGH);
+    // Set red as a default color for INDICATOR led
+    digitalWrite(INDICATOR_R, LOW);
+    digitalWrite(INDICATOR_G, HIGH);
+    digitalWrite(INDICATOR_B, HIGH);
 
-  // lightup leds in default color
-  analogWrite(redLedPin, redLed*ledBrightnes);
-  analogWrite(greenLedPin, greenLed*ledBrightnes);
-  analogWrite(blueLedPin, blueLed*ledBrightnes);
+    // lightup leds in default color
+    analogWrite(redLedPin, redLed*ledBrightnes);
+    analogWrite(greenLedPin, greenLed*ledBrightnes);
+    analogWrite(blueLedPin, blueLed*ledBrightnes);
 
-  // rainbow mode setup
-  randomSeed(analogRead(A3));
+    // rainbow mode setup
+    randomSeed(analogRead(A3));
 
-  Serial.begin(9600);
+    Serial.begin(9600);
 }
 
 void loop() {
 ///////////////////////////////////////////////////////////////
 //ENCODER CONTROL
 ///////////////////////////////////////////////////////////////
-  encoder1New = digitalRead(encoder1Pin1);
-  encoder2New = digitalRead(encoder2Pin1);
-  encoder3New = digitalRead(encoder3Pin1);
-  // LED COLOR CONTROL
-  if(encoder1New == LOW) {
-      while(digitalRead(encoder1Pin1) == LOW){
-      }
+    encoder1New = digitalRead(encoder1Pin1);
+    encoder2New = digitalRead(encoder2Pin1);
+    encoder3New = digitalRead(encoder3Pin1);
+    // ENCODER 1
+    if(encoder1New == LOW) {
+        while(digitalRead(encoder1Pin1) == LOW){
+        }
 
-      if(digitalRead(encoder1Pin2) == LOW) {
-       switch (encoder1Color) {
-           case RED: {
-               if(redLed > ledColorStepManual) {
-                   redLed -= ledColorStepManual;
-               }
-           } break;
-           case GREEN: {
-               if(greenLed > ledColorStepManual) {
-                   greenLed -= ledColorStepManual;
-               }
-           } break;
-           case BLUE: {
-               if(blueLed > ledColorStepManual) {
-                   blueLed -= ledColorStepManual;
-               }
-           } break;
-       }
-      } else {
-          switch (encoder1Color) {
-              case RED: {
-                  if(redLed < 255 - ledColorStepManual) {
-                      redLed += ledColorStepManual;
-                  }
-              } break;
-              case GREEN: {
-                  if(greenLed < 255 - ledColorStepManual) {
-                      greenLed += ledColorStepManual;
-                  }
-              } break;
-              case BLUE: {
-                  if(blueLed < 255 - ledColorStepManual) {
-                      blueLed += ledColorStepManual;
-                  }
-              } break;
-          }
-      }
-      analogWrite(redLedPin, redLed*ledBrightnes);
-      analogWrite(greenLedPin, greenLed*ledBrightnes);
-      analogWrite(blueLedPin, blueLed*ledBrightnes);
-      return;
-  }
-
-  // LED brightness
-  if(encoder2New == LOW) {
+        // LED COLOR CONTROL
+        if(digitalRead(encoder1Pin2) == LOW) {
+            switch (encoder1Color) {
+                case RED: {
+                    if(redLed > ledColorStepManual) {
+                        redLed -= ledColorStepManual;
+                    }
+                } break;
+                case GREEN: {
+                    if(greenLed > ledColorStepManual) {
+                        greenLed -= ledColorStepManual;
+                    }
+                } break;
+                case BLUE: {
+                    if(blueLed > ledColorStepManual) {
+                        blueLed -= ledColorStepManual;
+                    }
+                } break;
+            }
+        } else {
+            switch (encoder1Color) {
+                case RED: {
+                    if(redLed < 255 - ledColorStepManual) {
+                        redLed += ledColorStepManual;
+                    }
+                } break;
+                case GREEN: {
+                    if(greenLed < 255 - ledColorStepManual) {
+                        greenLed += ledColorStepManual;
+                    }
+                } break;
+                case BLUE: {
+                    if(blueLed < 255 - ledColorStepManual) {
+                        blueLed += ledColorStepManual;
+                    }
+                } break;
+            }
+        }
+        analogWrite(redLedPin, redLed*ledBrightnes);
+        analogWrite(greenLedPin, greenLed*ledBrightnes);
+        analogWrite(blueLedPin, blueLed*ledBrightnes);
+        return;
+    }
+    // ENCODER 2
+    if(encoder2New == LOW) {
       while(digitalRead(encoder2Pin1) == LOW){
       }
+      // LED brightness
       if(ledMode == MODECOLOR) {
           if(digitalRead(encoder2Pin2) == LOW) {
               if(ledBrightnes > brightnesStepManual){
@@ -180,6 +181,7 @@ void loop() {
           analogWrite(blueLedPin, blueLed*ledBrightnes);
           return;
       }
+      // BREATHING speed
       if(ledMode == MODEBREATHING) {
           if(digitalRead(encoder2Pin2) == LOW) {
               brightnesStep = brightnesStep*0.9;
@@ -191,6 +193,7 @@ void loop() {
 
   }
 
+  // ENCODER 3
   // Volume control
   // if(encoder3New == LOW) {
   //     while(digitalRead(encoder3Pin1) == LOW){
@@ -256,6 +259,7 @@ void loop() {
     if(ledMode == MODERAINBOW) {
         ledMode = MODECOLOR;
         encoder1Color = RED;
+        ledBrightnes = 1;
         digitalWrite(INDICATOR_R, LOW);
         digitalWrite(INDICATOR_G, HIGH);
         digitalWrite(INDICATOR_B, HIGH);
@@ -277,8 +281,8 @@ void loop() {
             }
         }
     }
-  // delay for debouncing
-  delay(500);
+    // delay for debouncing
+    delay(500);
     return;
   }
 
